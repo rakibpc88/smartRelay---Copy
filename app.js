@@ -98,7 +98,23 @@ class SmartRelayApp {
         `;
     }
 
+    renderSlots() {
+        // await this.loadTimeSlots();
+        // const slots = this.timeSlots;
+        // console.log(slots);
+       
+        return this.timeSlots.map((slot, index)=> {
+            return `<tr>
+                <td>Slot ${index +1}</td>
+                <td><input type="time" name="start_${index}" value="${slot.start}" /></td>
+                <td><input type="time" name="end_${index}" value="${slot.end}" /></td>
+                <td data-index="action_${index}">Action</td>
+            </tr>`
+        });
+    }
+
     getEditView() {
+        console.log(this.timeSlots)
         return `
             <header>
                 <h1>Edit Time Slots</h1>
@@ -108,7 +124,19 @@ class SmartRelayApp {
             <div class="card">
                 <form id="slotsForm" onsubmit="app.saveSlots(event)">
                     <div id="slotsContainer">
-                        <!-- Slots will be dynamically added here -->
+                       <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Start</th>
+                                <th>End</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${this.renderSlots()}
+                        </tbody>
+                       </table>
                     </div>
                     <div class="btn-group">
                         <button type="button" class="btn" onclick="app.addSlot()">Add Slot</button>
@@ -217,8 +245,21 @@ class SmartRelayApp {
     async loadTimeSlots() {
         // Note: We'll need to modify the ESP8266 code to provide an API endpoint for time slots
         // For now, this is a placeholder
-        this.timeSlots = []; // Will be populated from API
-        this.updateTimeSlotsDisplay();
+
+        if (!this.isAuthenticated) return;
+
+        try {
+            const response = await fetch(`${this.baseUrl}/api/slots`, {
+                headers: this.getAuthHeaders()
+            });
+
+            if (response.ok) {
+                this.timeSlots = await response.json();
+                this.updateTimeSlotsDisplay();
+            }
+        } catch (error) {
+            console.error('Failed to refresh status:', error);
+        }
     }
 
     updateTimeSlotsDisplay() {
@@ -297,6 +338,7 @@ class SmartRelayApp {
             }
         }
     }
+    
 }
 
 // Initialize the app when the page loads
